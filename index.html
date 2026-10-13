@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buku Alamat Baru</title>
+<style>
+:root { --bg:#0d0f1a; --card:#161a2b; --line:#232842; --txt:#eef0fa; --sub:#8b92b3; --acc:#4f46ff; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin:0; background:var(--bg); color:var(--txt); font-family: system-ui, sans-serif; }
+header { position:sticky; top:0; background:var(--bg); padding:12px; border-bottom:1px solid var(--line); z-index:2; }
+#q { width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--txt); font-size:16px; outline:none; }
+#q:focus { border-color:var(--acc); }
+.bar { display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:13px; color:var(--sub); }
+.bar button { background:none; border:1px solid var(--line); color:var(--sub); border-radius:8px; padding:5px 10px; font-size:12px; }
+.row { display:flex; align-items:center; gap:12px; padding:12px; border-bottom:1px solid var(--line); }
+.row.on { background:#1a1f3a; }
+.row input { width:22px; height:22px; accent-color:var(--acc); flex:none; }
+.info { flex:1; min-width:0; }
+.nm { font-weight:600; font-size:15px; }
+.ad { font-size:12px; color:var(--sub); word-break:break-all; margin-top:2px; font-family: ui-monospace, monospace; }
+.cp { background:var(--card); border:1px solid var(--line); color:var(--txt); border-radius:8px; padding:8px 12px; font-size:13px; flex:none; }
+.cp.ok { background:var(--acc); border-color:var(--acc); }
+.all { width:100%; margin-top:10px; padding:10px; border-radius:10px; border:1px solid var(--acc); background:none; color:var(--txt); font-size:14px; }
+.all.ok { background:var(--acc); }
+#kosong { padding:30px; text-align:center; color:var(--sub); display:none; }
+mark { background:#4f46ff55; color:inherit; border-radius:3px; }
+</style>
+</head>
+<body>
+<header>
+  <input id="q" type="search" placeholder="Cari nama atau alamat..." autocomplete="off">
+  <button id="all" class="all"></button>
+  <div class="bar">
+    <span id="info"></span>
+    <button id="reset">Hapus semua centang</button>
+  </div>
+</header>
+<main id="list"></main>
+<div id="kosong">Gak ada yang cocok</div>
+
+<script>
+const RAW = `Dompet Saya2|0xc29E5e8f7A3efFE30537E6D026a3762402E6359c
+Dompet Saya3|0x402581ab7Ec18108971A77572251129d5399b63d
+Dompet Saya5|0x5A3AF0a253FA76058ea486E6d8323D06B03e0e1b
+Dompet Saya6|0xC281a5c793CE9Ef8BF68c1842Bf24a6B91C42E63
+Dompet Saya7|0xA7eD413b9cF3207eDfb6bf5bBa980B5896F514F4
+Dompet Saya8|0xF9d17274D02473583ACC64B0B9337AD801c8F40f
+Dompet Saya9|0xb3179CD56e6f5DaDAC6cF78e92cE5EB159C813A4
+Dompet Saya10|0x39D1E674dc4c4Bc346a43403E86cF3265D85b30C
+asc|0x3F7C1a4D98e25816fB0DE2D72aEF49d10B3Ac9f2
+Dompet Saya12|0x2915888bC09becf2eA66d51644A07E0Ff40Bb212
+Dompet Saya15|0xd755E524731B88736b72fbB420DC9F5898a8c743
+Dompet Saya18|0xfd968565c22F265Ddfc5e1E235Ef4F2599075721
+Dompet Saya19|0x1c712681065A772C3ebF607e5a14B6eDF368F6E6
+Dompet Saya21|0xAf0D4E322acafa5Ad69b739d82f033cE370CDF65
+Dompet Saya22|0x73f1F9b3a62c2b5f8021FcaC11D156804BB53D8D
+Dompet Saya23|0xacFEd0b9379C2381c372F2Df355eA284E48AD0Fc
+Dompet Saya26|0x812c440662099478251Dd05C20b73d1C9418B9B4
+Dompet Saya27|0xe2d9009E1BFedfE4519A1bC657bbc04f427645eD
+Dompet Saya28|0x68EF1404454113c970067D53F40F60B4Bb36d216
+Dompet Saya29|0x70F05dc81BF59F661a85B7bb5cE2F7D3F32B1DEF
+Dompet Saya30|0xbe4359Dd05ACC34065C5eeAB6fb425D34F250149
+Dompet Saya31|0x7567C73E4fE90A8eAc3205c1b6db71c65Df2E69e
+Dompet Saya32|0xe716b0407a2833CEBb27FF7caA2520b869613593
+Dompet Saya33|0x8BdAC13B24a647A59bdC9be30B0211a42576Ca1D
+Dompet Saya35|0x83b7946699884De7d2112b90b79E541a29F0EE91
+Dompet Saya36|0x0e29FF7C76FdD115E1528D9f2F8795bAB919Ee91
+Dompet Saya38|0xc73d8Bd31dBdeFd629a2117157D195976B440573
+Dompet Saya39|0xfA3Ce045f7E9b7cc7CB4a9C520635Cd575aD45C7
+Dompet Saya40|0xD9BcD508977ef4203f31b427127f1A8C189EeC68
+Dompet Saya41|0xcB5c646285D6Ce60ee6856D7c041e90c906b4357
+Dompet Saya42|0x901e209669E3719023a735Ef368565D39e760E7b
+Dompet Saya43|0xF0e17b7171E22d2996feB9F8C78010fF3dF9c619
+Dompet Saya45|0x46d9e0F3A5fB527Dd1c92AABce44C90827e42e29
+Dompet Saya46|0x5678702D58Abc96c740Dd2BC89A91fb89fF6ed4A
+Dompet Saya48|0x4D88a8ea6f7F346D2FF0ab59701745Dedb6E23BA
+Dompet Saya49|0xCfC0cdE83745FaDddb56863f86b66426aF7545eF
+My wallet51|0x19B078040B4211347dA1bE8C3F2e5fb268C8eA59
+My wallet52|0x0c0c23Ba323D6489946E80acfffc2d516c217fD9
+My wallet53|0x389f787d45C2D694A242097B92506e3a82FDa933
+Dompet Saya54|0x3985E47D52977CD1af6e02259a309516e52E5a31
+Dompet Saya55|0xF848572AEee00A856752FF9061EFA1a8696afa87
+Dompet Saya56|0x7EB0A2977173Bf504c333fBa197e219e4Ad7b2F2
+Dompet Saya57|0xA9c9348771a8f13ADb5453cc828F34F2fe6CCD62
+Dompet Saya58|0xC85cA9485ef418b6f665Feec6aa645277c66E3b7
+Dompet Saya60|0x7d1D333F4e31Aed597B65eb1cb4cb0AB6aB0f5be
+Dompet Saya61|0x3BD46C3d359ba38097E0ba9b2FA7A7f504269C71
+Dompet Saya62|0x2b22063d55bD98b39521f8371Ec70F261f43e956
+CLAIM BID TANGGAL 2 JULI|0x5032197C7D2591bA43191bAce0CD72EF1BC514a9
+Dompet Saya65|0xbE16bbBA76523fdb494120CD5714bEd656eAC523
+Dompet Saya66|0x7c925b176e6F2147cA968456A8464f9f11dd9c17
+Dompet Saya67|0xa12050dfDd17C7Cb42a52EB279261c2DAB6C1900
+Dompet Saya68|0xB73f867EbF8Dd2cacFa7535Cd63957e291828125
+Dompet Saya69|0x8fD2cb347e6421D8A62b130bC467Ee64457C507a
+Dompet Saya70|0x2aA93f57E7ca107dddA9872AF7bDcEcc814114F8
+Dompet Saya71|0xdde9bD79198e2027297b188a4EA7FC92acD68972
+Dompet Saya72|0xb59854C5dca40F02E350Bd956AfEba0bBEeb9901
+Dompet Saya73|0x7F8De7a8d605453F401d961081b83605CaAE98D7
+Dompet Saya74|0xe22F483575c0D393EFa4e31646AEE201Ba309F35
+Dompet Saya75|0x3e43c65F429bdcc8C3fB60D4a88C0BDdfe6CCC07
+Dompet Saya76|0x34e4045b0768B3AaF9CB05C43b9680b1b13277b5
+Dompet Saya77|0x76F0dD11387342A11eE526fc16426c7D6e593255
+Dompet Saya78|0xC9b586cBBA750407ab4ff396277726611e4F36Ae
+Dompet Saya79|0x1558e9A96635D49aa84Eb59dbf59aB69BEc553Ea
+Dompet Saya80|0xA8f69b7A7982A1F1FCc04e31b8f01E174b7b5792
+Dompet Saya81|0xa68Fc59b310d2dCE6e052AAbD358497357AD21d7
+Dompet Saya82|0x4DdfcdAEB6A7A3701fd7160DfB11038f415bB788
+Dompet Saya83|0x98cAbe1cf8dF15dd09BC24700082b0E41d074562
+Dompet Saya84|0x6275b1Eef0f8C57193520637ba5c4bB9888aa359
+Dompet Saya85|0x4c5eb1219DD5f42Af516da694528BA6A3D244cf8
+Dompet Saya86|0x53458A041DD0DD31ee5E6C71A4794713963653Bd
+Dompet Saya87|0x3a6DfB5a3d699a18eb60042c18ef3AD606155EE0
+Dompet Saya88|0xBE8D3529Fc952c6a5669A0C445146ea388741Ee6
+Dompet Saya89|0xdc0C3cCa1d573c70C45CC78D07E099E64eA5421a
+Dompet Saya90|0x4f3f7ab20d9ad10517DFFB3CA07ed7733e4A65a5
+Dompet Saya91|0x2E9e1A03F085BeE6c24833d028aD2efB093be11f
+Dompet Saya92|0xb0c58Dd8C9e25561ad622CF6522E8b522DdBe3B4
+Dompet Saya93|0x1d867b6101f7F9Cc1AC2cBD3c4cC8448D78C9c55
+Dompet Saya94|0x25D653Cd5Fba58Ef0C69d46606D1bD389BD38a95
+Dompet Saya95|0xBE7A9b1e97717E9460011bA6ff9951D7603e31d0
+Dompet Saya96|0x339d34b9CB9fE185e904df595f591d55f6308339
+Dompet Saya97|0xd96D66Cd14A1b1b60686390d0b9acD97DD7885D5
+Dompet Saya98|0x5F7E1aBDBDeFdfF88b90DA71F13c679dd7Ae22F8
+Dompet Saya99|0x86ce4e44036f93e182CbDA10dd0b0f63AF0B32A7
+Dompet Saya100|0x1B785b1C3d6559C58fC72B0992499b8C8D569C7E
+Dompet Saya101|0xe01209A9A99C442f4949EA99C54D5024E41f0F4C
+Dompet Saya102|0x38bB5F9E2b30F86448f6a30A19aF79CdF4859580
+Dompet Saya103|0xF64C6beC5696fdA89C9f4c215bb93D483b37153D
+Dompet Saya104|0x47249abF0549220B44CE4506107502b8dd2A18c4
+Dompet Saya105|0xf2aab9D2a3F40fE82c2326c2832F2E6eFa1c744f
+Dompet Saya106|0xD90E3a1d14DA8db7907854563435d6FD4952c2bd
+Dompet Saya107|0xb68cC1b7fA534E1828F195257aE66fe32ff8eA21
+Dompet Saya108|0x6C6720Cc2c0A20F6b5445d42b82f14081Be145CC
+Dompet Saya109|0x5b783BF237DeA9c2454e19C8431BEE59c8C039cc
+Dompet Saya110|0x1BCb7090ABcCa0Dc3d2F350936c6bfD406a3E812
+Dompet Saya111|0x966DC2c3831D206341AcF6baF8f22f2049bD3a73
+Dompet Saya112|0x72f5674E04D54658Dcf4301A582930a0d32782C8
+Dompet Saya113|0x9D9D104ad588ff55a79459Ed74891Ba74C3567b0
+Dompet Saya114|0x2AA645A20F7d64907D64369fC439ae4AF01C6be0
+Dompet Saya115|0xB09a5eBb2A9f1A03A5165D5F8Dbb99c7F4588a9f
+Dompet Saya116|0x417482163D9264090313269F048d1A26E169BAe8
+Dompet Saya118|0x3811C6801A6330851668E3Ad8257981518cdF281
+Dompet Saya119|0x190e6A90f82E5f5673005c459D9Ce3c14BD48511
+Dompet Saya120|0xBfB6fCdb561ca9833A600a53A0ac35f5F76c2215
+Dompet Saya121|0x42078EfE33D5CA5Ff7AB577d134B6Fef0c8AF346
+Dompet Saya122|0xb010b16A20711639bDBe6B163b495f1aCd78c11B
+Dompet Saya124|0xB9392A5F40A9b9f1b32EC3968c9cB198350064CF
+Dompet Saya125|0x3341A04C2F758fEE32C2a0b2eadA73d4757ed0A0
+Dompet Saya126|0x00A10D33eeE2Fc48BC27E5159AB7Cd145748D3f1
+Dompet Saya129|0xB6e41Dc3859CD2Dd49A0657d2cb4d2dEdA677451
+Dompet Saya130|0xd075fa1f0b2d24f6a6Ac4DE5F999d24bBC04ED77
+Dompet Saya131|0xB9F9c21F34D33E0a9b3593E616e8C544123C9B0B
+Dompet Saya132|0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+Dompet Saya133|0x1293888A8CbAF4276a6A90Ea23090b1922678537
+Dompet Saya137|0xA950f3C87DFC10172BDb83ca68fe7690F8364671
+Dompet Saya138|0xDd65BB3cDACCE8171CFBeBac33EfFDeFD0E7C700
+Dompet Saya139|0x7A5E0F75491679a0407FA84FD7581CCbCD96e488
+Dompet Saya140|0x727c3c048F710f7ad19ef3E217087D9FAB63A2c9
+Dompet Saya141b|0x7DDb848F01C7df2118f941a3E0d5Dafdcc05fabD
+Dompet Saya142|0xBb67caA4D372bdC74198c108d1338980D9431fC2
+Dompet Saya143|0x0C2af32772695B179B76c3803fa1322ab56C10Fe
+Dompet Saya144|0x88ad03006CDC51706880937822CBeBa73AC72583
+Dompet Saya|0xF243A70F6f957B273120548AD63fABA5a4087066
+Dompet Saya3|0xc4E0E4B0C6C32e6Fe05B4Ea91a06D852783d50B0
+Dompet Saya4|0x1B5c62197005C0f3f69115c603848a9Ae6020d11
+Dompet Saya5|0x0Cac691cbdDCcD012F616fe54D532fcbdc85D531
+Dompet Saya6|0xB163c58DbE7EEB56C489b27158E66038E88210E9
+Dompet Saya8|0xC814cD529C7258D62eE720911558314486466DE0
+Dompet Saya9|0xc62208B5567b8c9Ab149ED48d3CaFd540DFDf2da
+Dompet Saya10|0x152552F0221449AC81D81762283A1A9b1A9AFd59
+Dompet Saya11|0x7f204e9c60257fEf3921fAb3fA6387931476714a
+Dompet Saya12|0xaA60809013b51AF75A5Cb3eD4865E01465d73ca0
+Dompet Saya13|0xd31D6E6FD47Cfbe7541E138DAb4a6b878D25DcE8
+Dompet Saya14|0xE0FdcC3122e40EbAbf9599C8f5A0FDd02c80736a
+Dompet Saya15|0xc5Cb35466F2527f1049fDb2AE94fDdEa1fd78c49
+Dompet Saya16|0xD10cA4ab3cB3dB2907E2e9D1CC6710CA9B28eb9e
+Dompet Saya18|0x9120B266b6dC7EFA4B345ac6e53486DA68B884cb
+Dompet Saya19|0xA0C27fb4290D149f23A04b473a2d596258E8bdbf
+depotapp|0xBa5EdAF58A91da4948C504A6c2e85a48DE3cB04B
+Dompet Saya21|0xCdd01a24f0bA12f2DE08C581053C9e1eB93AB0B0
+Dompet Saya22|0xa2493A24Dd24C6197352122e107DB3CE41a4cd97
+Dompet Saya23|0x012E37aB2c31d57DBF2a01CFf82447EcCc98fb12
+Dompet Saya24|0x2012f7A393697135bB627647c473Dd072bC30865
+Dompet Saya25|0xE630eee37a6823375689feeDDfA51B10805E5CF8
+Dompet Saya26|0x260cD9d90eBcFb418F5F043852E4084e20d6918b
+Dompet Saya27|0xaC0BBec930C78715e4c2Bb9580669471F40527d1
+Dompet Saya28|0x17c96442ABC527519184Cb3Aa7A2bfc7d1A615D5
+Dompet Saya29|0x74767fe1b77a4BBcA0B435474924417cF268178A
+Dompet Saya32|0x8C192E8Bb585E753E5483d998dF994c0177219C3
+Dompet Saya36|0xec6E8Ce9675E5e2eefa261E282d221E2Fa47ED52
+Dompet Saya39|0x4a8F116E558187Be9Aece6F8B32891e67361Fd08
+Dompet Saya40|0x0F3c55A9a264e613d0Cea2dAC40E697d97710f49
+Dompet Saya42|0xc10cB6dA72112beC0AFa2297bBC71224D10E580c
+Dompet Saya43|0xbbb4995FBDf46138b09bE7FdCf5e874a3ACc6B87
+Dompet Saya44|0x10277010142b23235104A25e18e62214bBdACA22
+Dompet Saya45|0x85D78384384F44caad42FB9f5735315358D6575A
+Dompet Saya46|0xEacD418Fc3Ea8b00F8C2c50A45cD911213512405
+Dompet Saya48|0xF072263Fb745A18d2d69C14794aec16a79c5B334
+Dompet Saya49|0xb42DDcd7c719d0067d3d85300D375a2C711A04a9
+sya***500@gmail.com|0x4D9775d6846a1C7AF5039D3332572DeC722b4a5a
+Dompet Saya51|0x4AAf4CEBfbf858cD42922d34533D9dfE439732fb
+Dompet Saya53|0xf0bEd2EE124faf4Edf21CB4C0976480cC08123dC
+Dompet Saya55|0x8e965f34F1364E9670216368A80747827Bbc0D0b
+Dompet Saya56|0xf78Dbfde67b5607aA4041B5F63Bbf3DB5937972d
+Dompet Saya63|0xE7Eb0D4F9f2A692315517aB06Ec59e91AFD48501
+Dompet Saya64|0x2C96B3CE7d472Db770888FbC75D982c7642cBcC2
+Dompet Saya73|0x5AE1D8ADDa537d43857F9C15B2620e563A17d844
+Dompet Saya75|0xfE65dc6972A90da198e9a2D81ca9F0b37ae07a79
+Dompet Saya83|0x81aF748983a8A4B3751a295c9ed3472B45f5C700
+Dompet Saya85|0xDE2BC37D02A8B8120B0C2434938c5B3698D4BE91
+Dompet Saya86|0x437A11d0fD39594b3eAcEdCCf985baB477d43057
+Dompet Saya89|0xec271C51B5Dc7c8ad15eD2eD74120DBCC3FCaC58
+Dompet Saya91|0x1c33f75b07C8f3A2B60F22B8333fa4DACE518d9F
+Dompet Saya95|0x3Dcfc0C5AD14a94A304a07FB269414b78b2715FA
+Dompet Saya96|0x1234D6fe3e4fDd9dF30D7C79CEeC185187C67395
+Dompet Saya97|0x2bDCBd1Be021643E0768d866f85DBfD213a8Efc6
+Dompet Saya99|0xC0ae2df06972A4322FA865BEB221ed08909Cfe54
+Dompet Saya100|0x0C76064B106afCDc658e3a6253803e21C21C7551
+Dompet Saya102|0xBa96f52899b98eCb0ce0A9D5a9C248F8cf866EF0
+Dompet Saya103|0x190e9c2042Ce7c771663C054e88B1A4A1d8dcB2D
+Dompet Saya104|0x38Dc52dB89a175e47173AF9065362A5E3c2678c5
+Dompet Saya105|0xA15ea2E6fED54669d888E48B9bCBe3742a6DA6DB
+Dompet Saya106|0x6860F34b4c990Ea111a961deF7181cBF27d34890
+Dompet Saya107|0xc371d8F34CDA1CAFDE91a212d5F767Ef2bA337eb
+Dompet Saya109|0xd40F4870E29178C83951261FC8348105092d53E4
+Dompet Saya111|0xE098e7D1ae4039f4CB3B56E4d2AEB9278DCaee83
+Dompet Saya112|0x3C81fff4C8b881D60c5084772bFa0327a97d3500
+Dompet Saya113|0xe225cB63F7406288481e40E3149ABEC8eC5A3F02
+Dompet Saya114|0x05c68F01E0AFd1163d134349196A74f4a0C6BB58
+Dompet Saya115|0x6558f60A1332Ff9252328ac9652907E154851660
+Dompet Saya116|0x02d3583c11a2ed4ab44062b3f2A7Df1A740d2C65
+Dompet Saya117|0x9729e5cE668b1784Af55be9E0b608fD80dA55CE3
+Dompet Saya118|0x020b5B6D6a1B3599Bb2da1bEc12C513f44A541De
+Dompet Saya119|0x79dfa7a1920400f630BA97cDBDb42F3C906aEFE9
+Dompet Saya120|0x1CC6218012Da3Ba8DDDA6c9C1de97819e60609D9
+Dompet Saya121|0xDBf03173f39922dF86E2334692e42425C9A75a74`;
+
+const data = RAW.split("\n").map(l => { const i = l.lastIndexOf("|"); return { n: l.slice(0, i), a: l.slice(i + 1) }; });
+const KEY = "buku-alamat-baru-v1";
+let done = {};
+try { done = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+
+const list = document.getElementById("list");
+const q = document.getElementById("q");
+const info = document.getElementById("info");
+const kosong = document.getElementById("kosong");
+const all = document.getElementById("all");
+let tampil = [];
+
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
+const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+function hl(s, k) {
+  if (!k) return esc(s);
+  const i = s.toLowerCase().indexOf(k);
+  if (i < 0) return esc(s);
+  return esc(s.slice(0, i)) + "<mark>" + esc(s.slice(i, i + k.length)) + "</mark>" + esc(s.slice(i + k.length));
+}
+
+function salin(txt, btn) {
+  const t0 = btn.textContent;
+  const ok = () => { btn.textContent = "Tersalin"; btn.classList.add("ok"); setTimeout(() => { btn.textContent = t0; btn.classList.remove("ok"); }, 1200); };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(ok, () => lama(txt, ok));
+  } else lama(txt, ok);
+}
+
+function lama(txt, ok) {
+  const t = document.createElement("textarea");
+  t.value = txt; t.style.position = "fixed"; t.style.opacity = "0";
+  document.body.appendChild(t); t.select();
+  try { document.execCommand("copy"); ok(); } catch (e) {}
+  t.remove();
+}
+
+function render() {
+  const k = q.value.trim().toLowerCase();
+  const hasil = data.map((d, i) => ({ ...d, i })).filter(d => !k || d.n.toLowerCase().includes(k) || d.a.toLowerCase().includes(k));
+  list.innerHTML = hasil.map(d => `<div class="row${done[d.i] ? " on" : ""}" data-i="${d.i}">
+    <input type="checkbox"${done[d.i] ? " checked" : ""}>
+    <div class="info"><div class="nm">${hl(d.n, k)}</div><div class="ad">${hl(d.a, k)}</div></div>
+    <button class="cp">Salin</button></div>`).join("");
+  kosong.style.display = hasil.length ? "none" : "block";
+  tampil = hasil;
+  all.textContent = hasil.length === data.length ? "Salin semua alamat (" + hasil.length + ")" : "Salin " + hasil.length + " alamat yang tampil";
+  const c = Object.keys(done).length;
+  info.textContent = `${hasil.length} dari ${data.length} alamat · ${c} dicentang`;
+}
+
+list.addEventListener("click", e => {
+  const row = e.target.closest(".row");
+  if (!row) return;
+  const i = +row.dataset.i;
+  if (e.target.classList.contains("cp")) return salin(data[i].a, e.target);
+  if (e.target.type !== "checkbox") return;
+  if (e.target.checked) done[i] = 1; else delete done[i];
+  row.classList.toggle("on", e.target.checked);
+  save();
+  info.textContent = info.textContent.replace(/\d+ dicentang/, Object.keys(done).length + " dicentang");
+});
+
+document.getElementById("reset").onclick = () => {
+  if (!confirm("Hapus semua centang?")) return;
+  done = {}; save(); render();
+};
+
+all.onclick = () => salin(tampil.map(d => d.a).join("\n"), all);
+
+q.addEventListener("input", render);
+render();
+</script>
+</body>
+</html>
